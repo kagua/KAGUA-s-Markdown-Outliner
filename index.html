@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Markdown Outline</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#222}body{overflow:hidden;background:#f5f5f5}.app{height:100vh;display:flex;flex-direction:column}.header{height:52px;flex:none;background:#222;color:#fff;display:flex;align-items:center;gap:6px;padding:0 12px}.logo{font-weight:700;margin-right:8px}.header button{border:0;border-radius:5px;background:#fff;color:#222;padding:7px 11px;cursor:pointer}.file-name{margin-left:10px;color:#bbb;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dropdown{position:relative}.menu{display:none;position:absolute;z-index:20;top:38px;left:0;width:180px;background:#fff;border:1px solid #ccc;border-radius:6px;box-shadow:0 6px 20px #0002}.menu.show{display:block}.menu button{width:100%;border:0;border-radius:0;text-align:left}.main{min-height:0;flex:1;display:flex}.outline{width:460px;min-width:340px;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column}.outline-head{height:42px;flex:none;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 12px;color:#666;font-size:13px}.tools{margin-left:auto;display:flex;gap:3px}.tools button{width:31px;height:28px;padding:0;background:#fff;border:1px solid #ccc;border-radius:5px;cursor:pointer}.tree{overflow:auto;flex:1;padding-bottom:30px}.node-row{height:36px;display:flex;align-items:center;border-bottom:1px solid #f0f0f0;cursor:pointer;padding-right:8px}.node-row:hover{background:#f7f7f7}.node.selected>.node-row{background:#e5efff;box-shadow:inset 3px 0 #3578e5}.handle{width:30px;flex:none;text-align:center;color:#999;cursor:grab;user-select:none}.toggle{width:22px;flex:none;text-align:center;color:#777}.node-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}.level{font-size:11px;color:#999;margin-left:5px}.children{min-height:2px}.collapsed{display:none}.ghost{opacity:.35;background:#9ec5ff}.editor{min-width:0;flex:1;background:#fff;display:flex;flex-direction:column}.title{height:58px;flex:none;width:100%;border:0;border-bottom:1px solid #ddd;outline:0;padding:0 24px;font-size:22px;font-weight:600}.body{flex:1;width:100%;resize:none;border:0;outline:0;padding:24px;font-size:16px;line-height:1.8}.title:disabled,.body:disabled{background:#fafafa}.status{height:28px;flex:none;border-top:1px solid #eee;color:#888;font-size:11px;padding:6px 12px}.danger{color:#b00020}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+  <div class="logo">Markdown Outline</div>
+  <div class="dropdown">
+    <button id="newBtn">新規 ▼</button>
+    <div id="newMenu" class="menu">
+      <button id="newFile">📄 新規ファイル</button>
+      <button id="newTopic">＋ 新規トピック</button>
+    </div>
+  </div>
+  <button id="openBtn">開く</button>
+  <button id="saveBtn">保存</button>
+  <span id="fileName" class="file-name">新規ファイル</span>
+  <input id="fileInput" type="file" accept=".md,.markdown,text/markdown" hidden>
+</header>
+<main class="main">
+<section class="outline">
+  <div class="outline-head"><span>アウトライン</span><div class="tools">
+    <button id="addSibling" title="同じレベルに追加">＋</button><button id="addChild" title="子トピック">子</button><button id="up" title="上へ">↑</button><button id="down" title="下へ">↓</button><button id="promote" title="レベルを上げる">←</button><button id="demote" title="レベルを下げる">→</button><button id="del" title="削除">×</button>
+  </div></div>
+  <div id="tree" class="tree"></div>
+</section>
+<section class="editor">
+  <input id="title" class="title" placeholder="トピック名" disabled>
+  <textarea id="body" class="body" placeholder="本文を入力..." disabled></textarea>
+  <div id="status" class="status">準備完了</div>
+</section>
+</main>
+</div>
+<script>
+let tree=[],selectedId=null,fileHandle=null,fileName="",dirty=false;
+const $=id=>document.getElementById(id);
+const id=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+const node=(title="新しいトピック")=>({id:id(),title,body:"",children:[],collapsed:false});
+function find(list,x){for(const n of list){if(n.id===x)return n;const r=find(n.children,x);if(r)return r}return null}
+function parentOf(list,x,p=null){for(const n of list){if(n.id===x)return p;const r=parentOf(n.children,x,n);if(r!==null)return r}return null}
+function siblings(x){const p=parentOf(tree,x);return p?p.children:tree}
+function level(x){let n=find(tree,x),l=1;while(n){const p=parentOf(tree,n.id);if(!p)break;l++;n=p}return l}
+function status(s){$("status").textContent=s}
+function dirtyNow(){dirty=true;status("未保存の変更")}
+function localSave(){try{localStorage.setItem("markdown-outline-tree",JSON.stringify(tree))}catch(e){}}
+function localLoad(){try{const x=JSON.parse(localStorage.getItem("markdown-outline-tree"));if(Array.isArray(x)){tree=x;return true}}catch(e){}return false}
+function mdToTree(md){const out=[],stack=[];let current=null;for(const raw of md.replace(/\r\n?/g,"\n").split("\n")){const m=raw.match(/^(#{1,6})\s+(.+?)\s*$/);if(m){const n=node(m[2].trim()),lv=m[1].length;while(stack.length&&stack[stack.length-1].level>=lv)stack.pop();if(stack.length)stack[stack.length-1].node.children.push(n);else out.push(n);stack.push({level:lv,node:n});current=n}else if(current){current.body+=(current.body?"\n":"")+raw}}return out}
+function treeToMd(list=tree,lv=1){let s="";for(const n of list){const l=Math.min(6,lv);s+="#".repeat(l)+" "+(n.title.trim()||"無題")+"\n\n";if(n.body.trim())s+=n.body.trim()+"\n\n";s+=treeToMd(n.children,l+1)}return s.trim()?s.trim()+"\n":""}
+function render(){const root=$("tree");root.innerHTML="";draw(tree,root);initSortables();updateSelection()}
+function draw(list,container){for(const n of list){const wrap=document.createElement("div");wrap.className="node";wrap.dataset.id=n.id;const row=document.createElement("div");row.className="node-row";row.style.paddingLeft=((level(n.id)-1)*18)+"px";const h=document.createElement("div");h.className="handle";h.textContent="☰";const t=document.createElement("div");t.className="toggle";if(n.children.length){t.textContent=n.collapsed?"▶":"▼";t.onclick=e=>{e.stopPropagation();n.collapsed=!n.collapsed;localSave();render()}}const title=document.createElement("div");title.className="node-title";title.textContent=n.title||"無題";const lv=document.createElement("div");lv.className="level";lv.textContent="H"+level(n.id);row.append(h,t,title,lv);row.onclick=()=>select(n.id);row.ondblclick=e=>{e.stopPropagation();inlineEdit(n,row)};wrap.append(row);const ch=document.createElement("div");ch.className="children";if(n.collapsed)ch.classList.add("collapsed");draw(n.children,ch);wrap.append(ch);container.append(wrap)}}
+function updateSelection(){document.querySelectorAll(".node").forEach(e=>e.classList.toggle("selected",e.dataset.id===selectedId))}
+function select(x){const n=find(tree,x);if(!n)return;selectedId=x;$("title").disabled=false;$("body").disabled=false;$("title").value=n.title;$("body").value=n.body;updateSelection()}
+function clearEditor(){$("title").value="";$('body').value="";$('title').disabled=true;$('body').disabled=true}
+function focusTitle(){$("title").focus();$("title").select()}
+function inlineEdit(n,row){const old=row.querySelector(".node-title");if(!old)return;const inp=document.createElement("input");inp.value=n.title;inp.style.cssText="flex:1;height:28px;border:1px solid #3578e5;outline:0";old.replaceWith(inp);inp.focus();inp.select();let done=false;const finish=()=>{if(done)return;done=true;if(inp.value.trim())n.title=inp.value.trim();localSave();dirtyNow();render();select(n.id)};inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();finish()}if(e.key==="Escape"){done=true;render();select(n.id)}};inp.onblur=finish}
+$("title").oninput=()=>{const n=find(tree,selectedId);if(n){n.title=$("title").value;localSave();dirtyNow();document.querySelectorAll(".node").forEach(e=>{if(e.dataset.id===n.id){const t=e.querySelector(".node-title");if(t)t.textContent=n.title||"無題"}})}};
+$("body").oninput=()=>{const n=find(tree,selectedId);if(n){n.body=$("body").value;localSave();dirtyNow()}};
+function addSibling(){const n=node();if(!selectedId)tree.push(n);else{const a=siblings(selectedId),i=a.findIndex(x=>x.id===selectedId);a.splice(i+1,0,n)}selectedId=n.id;localSave();dirtyNow();render();select(n.id);focusTitle()}
+function addChild(){if(!selectedId)return addSibling();const p=find(tree,selectedId);if(level(selectedId)>=6)return alert("Markdownの見出しはH6までです。");const n=node();p.children.push(n);p.collapsed=false;selectedId=n.id;localSave();dirtyNow();render();select(n.id);focusTitle()}
+function move(delta){if(!selectedId)return;const a=siblings(selectedId),i=a.findIndex(x=>x.id===selectedId),j=i+delta;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];localSave();dirtyNow();render();select(selectedId)}
+function promote(){if(!selectedId)return;const p=parentOf(tree,selectedId);if(!p)return;const gp=parentOf(tree,p.id),a=p.children,i=a.findIndex(x=>x.id===selectedId),n=a.splice(i,1)[0],target=gp?gp.children:tree,pi=target.findIndex(x=>x.id===p.id);target.splice(pi+1,0,n);localSave();dirtyNow();render();select(selectedId)}
+function demote(){if(!selectedId)return;const a=siblings(selectedId),i=a.findIndex(x=>x.id===selectedId);if(i<=0||level(selectedId)>=6)return;const n=a.splice(i,1)[0];a[i-1].children.push(n);a[i-1].collapsed=false;localSave();dirtyNow();render();select(selectedId)}
+function del(){if(!selectedId)return alert("削除するトピックを選択してください。");const p=parentOf(tree,selectedId),a=p?p.children:tree,i=a.findIndex(x=>x.id===selectedId);if(i<0)return;const n=a[i];if(!confirm("「"+(n.title||"無題")+"」を削除しますか？"+(n.children.length?"\n\n子トピックもすべて削除されます。":"")))return;const next=a[i+1]||a[i-1]||p||null;a.splice(i,1);selectedId=next?next.id:null;localSave();dirtyNow();render();if(selectedId)select(selectedId);else clearEditor();status("トピックを削除しました")}
+function initSortables(){if(typeof Sortable==="undefined")return;document.querySelectorAll(".children,#tree").forEach(el=>new Sortable(el,{group:"outline",animation:150,handle:".handle",draggable:".node",fallbackOnBody:true,swapThreshold:.65,onEnd(){rebuild();localSave();dirtyNow();render();if(selectedId)select(selectedId)}}))}
+function rebuild(){const root=$("tree");function read(el){const out=[];for(const w of el.children){if(!w.classList.contains("node"))continue;const n=find(tree,w.dataset.id);if(!n)continue;const c=Array.from(w.children).find(x=>x.classList.contains("children"));n.children=c?read(c):[];out.push(n)}return out}tree=read(root)}
+function newFile(){closeMenu();if(dirty&&tree.length&&!confirm("未保存の変更があります。新しいファイルを作成しますか？"))return;const n=node();tree=[n];selectedId=n.id;fileHandle=null;fileName="";dirty=true;localSave();render();select(n.id);focusTitle();updateFileName();status("新規ファイルを作成しました")}
+function newTopic(){closeMenu();addSibling()}
+async function openFile(){try{if(typeof showOpenFilePicker==="function"){try{const [h]=await showOpenFilePicker({multiple:false,types:[{description:"Markdown",accept:{"text/markdown":[".md",".markdown"]}}]});const f=await h.getFile();tree=mdToTree(await f.text());fileHandle=h;fileName=f.name;dirty=false;selectedId=tree[0]?.id||null;localSave();render();updateFileName();if(selectedId)select(selectedId);else clearEditor();status(f.name+" を開きました");return}catch(e){if(e.name==="AbortError")return}}$("fileInput").value="";$("fileInput").click()}catch(e){alert("ファイルを開けませんでした。\n"+e.message)}}
+$("fileInput").onchange=()=>{const f=$("fileInput").files[0];if(!f)return;const r=new FileReader();r.onload=()=>{tree=mdToTree(r.result);fileHandle=null;fileName=f.name;dirty=false;selectedId=tree[0]?.id||null;localSave();render();updateFileName();if(selectedId)select(selectedId);else clearEditor();status(f.name+" を開きました")};r.readAsText(f)};
+async function saveFile(){const md=treeToMd();if(!md.trim())return alert("保存する内容がありません。");if(fileHandle){try{if(fileHandle.queryPermission){let p=await fileHandle.queryPermission({mode:"readwrite"});if(p!=="granted")p=await fileHandle.requestPermission({mode:"readwrite"});if(p!=="granted")throw Error("書き込み権限がありません")};const w=await fileHandle.createWritable();await w.write(md);await w.close();dirty=false;localSave();status(fileName+" を保存しました");return}catch(e){console.warn(e)}}if(typeof showSaveFilePicker==="function"){try{const h=await showSaveFilePicker({suggestedName:fileName||"outline.md",types:[{description:"Markdown",accept:{"text/markdown":[".md"]}}]});const w=await h.createWritable();await w.write(md);await w.close();fileHandle=h;fileName=h.name;dirty=false;localSave();updateFileName();status(fileName+" を保存しました");return}catch(e){if(e.name==="AbortError")return}}const blob=new Blob([md],{type:"text/markdown;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fileName||"outline.md";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);dirty=false;localSave();status((fileName||"outline.md")+" をダウンロードしました")}
+function updateFileName(){$("fileName").textContent=fileName||"新規ファイル"}
+function closeMenu(){$("newMenu").classList.remove("show")}
+$("newBtn").onclick=e=>{$("newMenu").classList.toggle("show");e.stopPropagation()};document.onclick=e=>{if(!e.target.closest(".dropdown"))closeMenu()};$("newFile").onclick=newFile;$("newTopic").onclick=newTopic;$("openBtn").onclick=openFile;$("saveBtn").onclick=saveFile;$("addSibling").onclick=addSibling;$("addChild").onclick=addChild;$("up").onclick=()=>move(-1);$("down").onclick=()=>move(1);$("promote").onclick=promote;$("demote").onclick=demote;$("del").onclick=del;
+document.onkeydown=e=>{if(e.ctrlKey&&e.key.toLowerCase()==="s"){e.preventDefault();saveFile();return}if(document.activeElement===$("body"))return;if(document.activeElement===$("title")){if(e.key==="Enter"){e.preventDefault();$("body").focus()}return}if(e.key==="Enter"){e.preventDefault();addSibling()}else if(e.key==="Tab"){e.preventDefault();e.shiftKey?promote():demote()}else if(e.key==="Delete"){e.preventDefault();del()}else if(e.ctrlKey&&e.key==="ArrowUp"){e.preventDefault();move(-1)}else if(e.ctrlKey&&e.key==="ArrowDown"){e.preventDefault();move(1)}};
+if(!localLoad()){tree=[node("新しい章")];tree[0].children=[node("新しいトピック")];}selectedId=tree[0]?.id||null;render();if(selectedId)select(selectedId);updateFileName();status("準備完了");
+</script>
+</body>
+</html>
