@@ -69,7 +69,48 @@ function move(delta){if(!selectedId)return;const a=siblings(selectedId),i=a.find
 function promote(){if(!selectedId)return;const p=parentOf(tree,selectedId);if(!p)return;const gp=parentOf(tree,p.id),a=p.children,i=a.findIndex(x=>x.id===selectedId),n=a.splice(i,1)[0],target=gp?gp.children:tree,pi=target.findIndex(x=>x.id===p.id);target.splice(pi+1,0,n);localSave();dirtyNow();render();select(selectedId)}
 function demote(){if(!selectedId)return;const a=siblings(selectedId),i=a.findIndex(x=>x.id===selectedId);if(i<=0||level(selectedId)>=6)return;const n=a.splice(i,1)[0];a[i-1].children.push(n);a[i-1].collapsed=false;localSave();dirtyNow();render();select(selectedId)}
 function del(){if(!selectedId)return alert("削除するトピックを選択してください。");const p=parentOf(tree,selectedId),a=p?p.children:tree,i=a.findIndex(x=>x.id===selectedId);if(i<0)return;const n=a[i];if(!confirm("「"+(n.title||"無題")+"」を削除しますか？"+(n.children.length?"\n\n子トピックもすべて削除されます。":"")))return;const next=a[i+1]||a[i-1]||p||null;a.splice(i,1);selectedId=next?next.id:null;localSave();dirtyNow();render();if(selectedId)select(selectedId);else clearEditor();status("トピックを削除しました")}
-function initSortables(){if(typeof Sortable==="undefined")return;document.querySelectorAll(".children,#tree").forEach(el=>new Sortable(el,{group:"outline",animation:150,handle:".handle",draggable:".node",fallbackOnBody:true,swapThreshold:.65,onEnd(){rebuild();localSave();dirtyNow();render();if(selectedId)select(selectedId)}}))}
+function initSortables(){
+  if(typeof Sortable==="undefined")return;
+  let dragStartX=0;
+
+  document.querySelectorAll(".children,#tree").forEach(el=>new Sortable(el,{
+    group:"outline",
+    animation:150,
+    handle:".handle",
+    draggable:".node",
+    fallbackOnBody:true,
+    swapThreshold:.65,
+    invertSwap:true,
+    invertedSwapThreshold:.65,
+
+    onStart(evt,originalEvent){
+      dragStartX=originalEvent?.clientX ?? evt.draggedRect.left;
+    },
+
+    onMove(evt,originalEvent){
+      /*
+       * 下方向へドラッグしただけなのに、直下のトピックの
+       * children領域へ入り込んでしまう問題を防ぐ。
+       * 階層を変える場合だけ、右方向へ50px以上ドラッグする。
+       */
+      const to=evt.to;
+      if(to && to.classList.contains("children")){
+        const x=originalEvent?.clientX ?? evt.draggedRect.left;
+        const movedRight=x-dragStartX;
+        if(movedRight < 50)return false;
+      }
+      return true;
+    },
+
+    onEnd(){
+      rebuild();
+      localSave();
+      dirtyNow();
+      render();
+      if(selectedId)select(selectedId);
+    }
+  }));
+}
 function rebuild(){const root=$("tree");function read(el){const out=[];for(const w of el.children){if(!w.classList.contains("node"))continue;const n=find(tree,w.dataset.id);if(!n)continue;const c=Array.from(w.children).find(x=>x.classList.contains("children"));n.children=c?read(c):[];out.push(n)}return out}tree=read(root)}
 function newFile(){closeMenu();if(dirty&&tree.length&&!confirm("未保存の変更があります。新しいファイルを作成しますか？"))return;const n=node();tree=[n];selectedId=n.id;fileHandle=null;fileName="";dirty=true;localSave();render();select(n.id);focusTitle();updateFileName();status("新規ファイルを作成しました")}
 function newTopic(){closeMenu();addSibling()}
