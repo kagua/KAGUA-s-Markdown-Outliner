@@ -1,10 +1,44 @@
 <!doctype html>
 <html lang="ja">
 <head>
+<!-- Google Tag Manager G-6C57YV6X0W -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6C57YV6X0W"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){
+    dataLayer.push(arguments);
+  }
+  gtag('js', new Date());
+  gtag('config', 'G-6C57YV6X0W');
+</script>
+<!-- End Google Tag Manager -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KAGUA's Markdown Outliner</title>
+<title>KAGUA's Markdown Outliner｜KMO～マークダウンを手軽に編集！</title>
+<link rel="icon" href="./favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="manifest" href="./site.webmanifest">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+<meta name="description" content="Markdownファイルを、章・節・項目のツリー形式で整理・編集できるシンプルなアウトラインプロセッサです。">
+
+<link rel="canonical" href="https://studio.kagua.biz/kmo/">
+
+<meta property="og:title" content="KAGUA's Markdown Outliner">
+<meta property="og:description" content="Markdownファイルを、章・節・項目のツリー形式で整理・編集できるシンプルなアウトラインプロセッサです。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://studio.kagua.biz/kmo/">
+<meta property="og:image" content="https://studio.kagua.biz/kmo/ogp.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1081">
+<meta property="og:image:alt" content="KAGUA's Markdown Outliner">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KAGUA's Markdown Outliner">
+<meta name="twitter:description" content="Markdownファイルを、章・節・項目のツリー形式で整理・編集できるシンプルなアウトラインプロセッサです。">
+<meta name="twitter:image" content="https://studio.kagua.biz/kmo/ogp.jpg">
+<meta name="twitter:image:alt" content="KAGUA's Markdown Outliner">
+
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#222}body{overflow:hidden;background:#f5f5f5}.app{height:100vh;display:flex;flex-direction:column}.header{height:52px;flex:none;background:#222;color:#fff;display:flex;align-items:center;gap:6px;padding:0 12px}.logo{font-weight:700;margin-right:8px}.header button{border:0;border-radius:5px;background:#fff;color:#222;padding:7px 11px;cursor:pointer}.header .share-btn{background:#fff;color:#222}.file-name{margin-left:10px;color:#bbb;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dropdown{position:relative}.menu{display:none;position:absolute;z-index:20;top:38px;left:0;width:180px;background:#fff;border:1px solid #ccc;border-radius:6px;box-shadow:0 6px 20px #0002}.menu.show{display:block}.menu button{width:100%;border:0;border-radius:0;text-align:left}.main{min-height:0;flex:1;display:flex}.outline{width:460px;min-width:340px;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column}.outline-head{height:42px;flex:none;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 12px;color:#666;font-size:13px}.tools{margin-left:auto;display:flex;gap:3px}.tools button{width:31px;height:28px;padding:0;background:#fff;border:1px solid #ccc;border-radius:5px;cursor:pointer}.tree{overflow:auto;flex:1;padding-bottom:30px}.node-row{height:36px;display:flex;align-items:center;border-bottom:1px solid #f0f0f0;cursor:pointer;padding-right:8px}.node-row:hover{background:#f7f7f7}.node.selected>.node-row{background:#e5efff;box-shadow:inset 3px 0 #3578e5}.handle{width:30px;flex:none;text-align:center;color:#999;cursor:grab;user-select:none}.toggle{width:22px;flex:none;text-align:center;color:#777}.node-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}.level{font-size:11px;color:#999;margin-left:5px}.children{min-height:2px}.collapsed{display:none}.ghost{opacity:.35;background:#9ec5ff}.editor{min-width:0;flex:1;background:#fff;display:flex;flex-direction:column}.title{height:58px;flex:none;width:100%;border:0;border-bottom:1px solid #ddd;outline:0;padding:0 24px;font-size:22px;font-weight:600}.body{flex:1;width:100%;resize:none;border:0;outline:0;padding:24px;font-size:16px;line-height:1.8}.title:disabled,.body:disabled{background:#fafafa}.status{height:28px;flex:none;border-top:1px solid #eee;color:#888;font-size:11px;padding:6px 12px}.danger{color:#b00020}
 </style>
