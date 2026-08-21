@@ -1,17 +1,25 @@
 Markdown Outline
 
 使い方
-1. index.html をChromeまたはEdgeで開きます。
-2. 「開く」でMarkdown（.md）を読み込みます。
-3. 左のトピックを選択して右側で編集します。
-4. ＋=同じ階層、子=子トピック、↑↓=移動、←→=階層変更、×=削除。
-5. ドラッグ＆ドロップでも移動できます。
-6. 「保存」でMarkdownとして保存します。
+1. index.html と Sortable.min.js を同じフォルダに置く
+2. Chrome / Edge で index.html を開く
+3. 「開く」で Markdown (.md / .markdown) を読み込む
+4. 「保存」で Markdown を保存する
 
-注意
-- ドラッグ＆ドロップにはSortableJS 1.15.7をCDNから読み込みます。
-- File System Access API対応ブラウザでは開いたファイルへ上書き保存できます。
-- 非対応環境では通常のファイル選択・ダウンロードにフォールバックします。
-- 完全オフライン利用には Sortable.min.js を同じフォルダに置き、index.html のCDN scriptを
-  <script src="Sortable.min.js"></script>
-  に変更してください。
+主な操作
+- ＋ : 同じ階層にトピック追加
+- 子 : 子トピック追加
+- ↑ ↓ : 同じ階層で移動
+- ← → : 階層を変更
+- × : トピック削除
+- ドラッグ : トピックを移動
+- Enter : 同じ階層に追加
+- Tab / Shift+Tab : 階層変更
+- Ctrl+S : 保存
+
+Markdown出力
+- ATX形式 (# 見出し)
+- 本文と見出しの間を空行で区切る
+- 本文の最後にも空行を1行入れる
+
+SortableJS 1.15.7をローカル同梱しているため、ドラッグ操作はCDN不要です。
